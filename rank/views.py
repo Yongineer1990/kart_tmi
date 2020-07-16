@@ -1,4 +1,5 @@
 import json
+import copy
 
 from django.views import View
 from django.http import (
@@ -17,6 +18,12 @@ from .models import (
 )
 from metadata.models import Track
 from user.utils import login_decorator
+
+def milisec_converter(mili_sec):
+    minute     = float(int(mili_sec)/60000)
+    second     = str(round((float(format(minute, '.4f')) - (int(mili_sec)//60000)) * 60, 2)).replace('.','\'')
+    lap_time   = str(int(mili_sec)//60000) + '\'' + second
+    return lap_time
 
 class CommentView(View):
     def get(self, request, user_id):
@@ -110,7 +117,7 @@ class IndiDetailTrackView(View):
         track_info_result = [
                 {
                     'play_cnt': i.play_cnt,
-                    'win_ratio': i.win_ratio,
+                    'win_ratio': float(i.win_ratio),
                     'best_lap': i.best_lap,
                     'track_name': i.track.name,
                     'track_key': Track.objects.get(name=i.track).key
@@ -146,9 +153,13 @@ class IndiDetailTrackDist(View):
         track  = Track.objects.get(key = track_key)
         track_record = UserTrackRecord.objects.get(
                 game_user = access_id, team_type = match_type, track = track)
+        track_record2 = copy.deepcopy(track_record)
+        track_record3 = {str(milisec_converter(i)):j for i,j in eval(track_record2.cumul_dist)[1].items()}
+        track_record4 = [str(milisec_converter(eval(track_record2.cumul_dist)[0])), track_record3]
         track_record_result = [
                 {
                     'track_distribution': eval(track_record.cumul_dist),
+                    'track_distribution2' : track_record4,
                     'track_name': track_record.track.name,
                     'track_key': Track.objects.get(name=track_record.track.name).key
                     }
@@ -162,9 +173,13 @@ class TeamDetailTrackDist(View):
         track  = Track.objects.get(key = track_key)
         track_record = UserTrackRecord.objects.get(
                 game_user = access_id, team_type = match_type, track = track)
+        track_record2 = copy.deepcopy(track_record)
+        track_record3 = {str(milisec_converter(i)):j for i,j in eval(track_record2.cumul_dist)[1].items()}
+        track_record4 = [str(milisec_converter(eval(track_record2.cumul_dist)[0])), track_record3]
         track_record_result = [
                 {
                     'track_distribution': eval(track_record.cumul_dist),
+                    'track_distribution2' : track_record4,
                     'track_name': track_record.track.name,
                     'track_key': Track.objects.get(name=track_record.track.name).key
                     }
