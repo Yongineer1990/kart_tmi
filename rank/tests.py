@@ -14,7 +14,9 @@ from .models import (
     GameUser,
     Comment,
     Detail,
-    UserPageHit
+    UserPageHit,
+    Ranking,
+    TeamType
 )
 from user.models import Users
 from config.settings import (
@@ -119,3 +121,125 @@ class RankDetailTest(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+class IndiRankTest(TestCase):
+
+    def setUp(self):
+
+        TeamType.objects.create(
+            name = "개인전"
+        )
+
+        GameUser.objects.create(
+            id        = 1,
+            access_id = 'test1',
+            nickname  = 'from_user',
+            team_id   = 1,
+            rank      = 23
+        )
+        Ranking.objects.create(
+            rank         = 33,
+            cumul_point  = 125,
+            point_get    = 23,
+            win_pct      = 0.62,
+            retire_pct   = 0.01,
+            play_cnt     = 55, 
+            game_user_id = GameUser.objects.get(access_id='test1').id,
+            team_type_id = TeamType.objects.get(id=1).id
+        )
+
+    def tearDown(self):
+        GameUser.objects.all().delete()
+        TeamType.objects.all().delete()
+        Ranking.objects.all().delete()
+    
+    def test_indi_rank_list_pass(self):
+        client  = Client()
+
+        response = client.get('/rank/indiranklist', content_type='applications/json')
+        
+        test_dict = {
+            'indi_rank_list': 
+                [
+                    {
+                        'id'           : 1, 
+                        'rank'         : 33, 
+                        'rank_diff'    : None, 
+                        'cumul_point'  : 125, 
+                        'point_get'    : 23, 
+                        'win_pct'      : '0.62', 
+                        'retire_pct'   : '0.01', 
+                        'play_cnt'     : 55, 
+                        'avg_rank'     : None, 
+                        'game_user_id' : 1, 
+                        'team_type_id' : 1, 
+                        'nickname'     : 'from_user',
+                        'access_id'    : 'test1',
+                        'matchType'    : '7b9f0fd5377c38514dbb78ebe63ac6c3b81009d5a31dd569d1cff8f005aa881a'
+                    }
+                ]
+            }       
+        
+        self.assertEqual(response.json(), test_dict)
+        self.assertEqual(response.status_code, 200)
+    
+class TeamRankTest(TestCase):
+
+    def setUp(self):
+        
+        TeamType.objects.create(
+            name = "팀전"
+        )
+
+        GameUser.objects.create(
+            id        = 1,
+            access_id = 'test2',
+            nickname  = 'to_user',
+            team_id   = 2,
+            rank      = 23
+        )
+
+        Ranking.objects.create(
+            rank         = 23,
+            cumul_point  = 125,
+            point_get    = 23,
+            win_pct      = 0.62,
+            retire_pct   = 0.01,
+            play_cnt     = 55, 
+            game_user_id = GameUser.objects.get(access_id='test2').id,
+            team_type_id = TeamType.objects.get(id=2).id
+        )
+
+    def tearDown(self):
+        GameUser.objects.all().delete()
+        TeamType.objects.all().delete()
+        Ranking.objects.all().delete()
+    
+    def test_team_rank_list_pass(self):
+        client  = Client()
+
+        response = client.get('/rank/teamranklist', content_type='applications/json')
+
+        test_dict = {
+            'team_rank_list': 
+                [
+                    {
+                        'id'           : 2, 
+                        'rank'         : 23, 
+                        'rank_diff'    : None, 
+                        'cumul_point'  : 125, 
+                        'point_get'    : 23, 
+                        'win_pct'      : '0.62', 
+                        'retire_pct'   : '0.01', 
+                        'play_cnt'     : 55, 
+                        'avg_rank'     : None, 
+                        'game_user_id' : 1, 
+                        'team_type_id' : 2, 
+                        'nickname'     : 'to_user',
+                        'access_id'    : 'test2',
+                        'matchType'    : 'effd66758144a29868663aa50e85d3d95c5bc0147d7fdb9802691c2087f3416e'
+                    }
+                ]
+            }       
+
+        self.assertEqual(response.json(), test_dict)
+        self.assertEqual(response.status_code, 200)
