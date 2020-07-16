@@ -11,8 +11,13 @@ from .models import (
     Comment,
     Detail,
     UserPageHit,
-    Ranking
+    Ranking,
+    UserTrackInfo,
+    UserTrackRecord,
+    TeamType
 )
+
+from metadata.models import Track
 from user.utils import login_decorator
 
 class CommentView(View):
@@ -77,7 +82,8 @@ class RankDetailView(View):
                     'id'    : detail.character.id,
                     'name'  : detail.character.name,
                     'key'   : detail.character.key,
-                    'img'   : detail.character.url
+                    'img'   : detail.character.url,
+                    'nickname'  : gameuser.nickname,
                 },
                 'pageview'      : pageview.count,
                 'win_ratio'     : win_ratio,
@@ -96,10 +102,8 @@ class RankDetailView(View):
 class IndiRankListView(View):
 
     def get(self, request):
-        
         indi_match_id = "7b9f0fd5377c38514dbb78ebe63ac6c3b81009d5a31dd569d1cff8f005aa881a"
         team_id = 1
-
         rank_list = Ranking.objects.prefetch_related('game_user_set').filter(team_type_id=team_id).values()
         rank_list = list(rank_list)
 
@@ -108,18 +112,13 @@ class IndiRankListView(View):
             rank_list[i]['access_id'] = GameUser.objects.get(id=i+1).access_id
             rank_list[i]['matchType'] = indi_match_id 
         
-        
-
-
         return JsonResponse({"indi_rank_list" : rank_list}, status = 200)
 
 class TeamRankListView(View):
 
     def get(self, request):
-
         team_match_id = "effd66758144a29868663aa50e85d3d95c5bc0147d7fdb9802691c2087f3416e"
         team_id = 2 
-
         rank_list = Ranking.objects.prefetch_related('game_user_set').filter(team_type_id=team_id).values()
         rank_list = list(rank_list)
 
@@ -128,5 +127,78 @@ class TeamRankListView(View):
             rank_list[i]['access_id'] = GameUser.objects.get(id=i+1).access_id
             rank_list[i]['matchType'] = team_match_id 
 
-
         return JsonResponse({"team_rank_list" : rank_list}, status = 200)
+
+class IndiDetailTrackView(View):
+    def get(self, request, access_id):
+        access_id     = GameUser.objects.get(access_id = access_id)
+        match_type    = TeamType.objects.get(name = '개인전')
+        track_records = UserTrackRecord.objects.filter(
+                game_user=access_id).all()
+        track_infos = UserTrackInfo.objects.filter(
+                game_user_id=access_id, team_type=match_type).all()
+        records_exists = [i.track for i  in track_records]
+        info_exists_in_records = [i for i in track_infos if i.track in records_exists]
+        track_info_result = [
+                {
+                    'play_cnt': i.play_cnt,
+                    'win_ratio': i.win_ratio,
+                    'best_lap': i.best_lap,
+                    'track_name': i.track.name,
+                    'track_key': Track.objects.get(name=i.track).key
+                    }
+                for i in info_exists_in_records]
+        return JsonResponse({"information": track_info_result}, status=200)
+
+class TeamDetailTrackView(View):
+    def get(self, request, access_id):
+        access_id     = GameUser.objects.get(access_id = access_id)
+        match_type    = TeamType.objects.get(name = '팀전')
+        track_records = UserTrackRecord.objects.filter(
+                game_user=access_id).all()
+        track_infos = UserTrackInfo.objects.filter(
+                game_user_id=access_id, team_type=match_type).all()
+        records_exists = [i.track for i  in track_records]
+        info_exists_in_records = [i for i in track_infos if i.track in records_exists]
+        track_info_result = [
+                {
+                    'play_cnt': i.play_cnt,
+                    'win_ratio': float(i.win_ratio),
+                    'best_lap':  i.best_lap,
+                    'track_name': i.track.name,
+                    'track_key': Track.objects.get(name=i.track).key
+                    }
+                for i in info_exists_in_records]
+        return JsonResponse({"information": track_info_result}, status=200)
+
+class IndiDetailTrackDist(View):
+    def get(self, request, access_id, track_key):
+        access_id  = GameUser.objects.get(access_id = access_id)
+        match_type = TeamType.objects.get(name = '개인전')
+        track  = Track.objects.get(key = track_key)
+        track_record = UserTrackRecord.objects.get(
+                game_user = access_id, team_type = match_type, track = track)
+        track_record_result = [
+                {
+                    'track_distribution': eval(track_record.cumul_dist),
+                    'track_name': track_record.track.name,
+                    'track_key': Track.objects.get(name=track_record.track.name).key
+                    }
+                ]
+        return JsonResponse({"information": track_record_result}, status=200)
+
+class TeamDetailTrackDist(View):
+    def get(self, request, access_id, track_key):
+        access_id  = GameUser.objects.get(access_id = access_id)
+        match_type = TeamType.objects.get(name = '팀전')
+        track  = Track.objects.get(key = track_key)
+        track_record = UserTrackRecord.objects.get(
+                game_user = access_id, team_type = match_type, track = track)
+        track_record_result = [
+                {
+                    'track_distribution': eval(track_record.cumul_dist),
+                    'track_name': track_record.track.name,
+                    'track_key': Track.objects.get(name=track_record.track.name).key
+                    }
+                ]
+        return JsonResponse({"information": track_record_result}, status=200)
