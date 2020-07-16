@@ -66,6 +66,11 @@ class RankDetailView(View):
 
             win_ratio   = round(detail.win_cnt / detail.play_cnt, 2)
 
+            rank_list_50 = eval(detail.rank_list_50)
+            for index, i in enumerate(rank_list_50):
+                if i == 99.0:
+                    rank_list_50[index] = 8.0
+
             return JsonResponse({
                 'character' : {
                     'id'    : detail.character.id,
@@ -78,7 +83,7 @@ class RankDetailView(View):
                 'retire_ratio'  : float(detail.retire_pct),
                 'rank_avg_500'  : float(detail.rank_avg_500),
                 'rank_avg_50'   : float(detail.rank_avg_50),
-                'rank_list_50'  : eval(detail.rank_list_50)
+                'rank_list_50'  : rank_list_50
             }, status=200)
 
         except KeyError:

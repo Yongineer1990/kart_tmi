@@ -99,7 +99,6 @@ class Detail(models.Model):
     rank_avg_50    = models.DecimalField(max_digits = 10, decimal_places = 2)
     rank_avg_500   = models.DecimalField(max_digits = 10, decimal_places = 2)
     rank_list_50   = models.CharField(max_length = 300)
-    expected_ratio = models.DecimalField(max_digits = 10, decimal_places = 2)
     game_user      = models.OneToOneField("GameUser", on_delete = models.CASCADE)
     character      = models.ForeignKey("metadata.Character", on_delete = models.SET_NULL, null = True)
     team_type      = models.ForeignKey("TeamType", on_delete = models.SET_NULL, null = True)
