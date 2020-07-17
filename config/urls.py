@@ -6,5 +6,6 @@ from django.urls import (
 
 urlpatterns = [
     path('user', include('user.urls')),
-    path('rank', include('rank.urls'))
+    path('rank', include('rank.urls')),
+    path('match', include('match.urls'))
 ]
