@@ -18,5 +18,5 @@ urlpatterns = [
     path('/detailtrack/indi/<str:access_id>', IndiDetailTrackView.as_view()),
     path('/detaitrack/team/<str:access_id>', TeamDetailTrackView.as_view()),
     path('/detailtrack/indi/<str:access_id>/<str:track_key>', IndiDetailTrackDist.as_view()),
-    path('/detailtrack/team/<str:access_id>/<str:track_key>', TeamDetailTrackDist.as_view()),
+    path('/detailtrack/team/<str:access_id>/<str:track_key>', TeamDetailTrackDist.as_view())
 ]

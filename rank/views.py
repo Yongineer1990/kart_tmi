@@ -1,4 +1,5 @@
 import json
+import copy
 
 from django.views import View
 from django.http import (
@@ -11,14 +12,19 @@ from .models import (
     Comment,
     Detail,
     UserPageHit,
-    Ranking,
     UserTrackInfo,
     UserTrackRecord,
     TeamType
 )
-
 from metadata.models import Track
 from user.utils import login_decorator
+
+def milisec_converter(mili_sec):
+    minute     = float(int(mili_sec)/60000)
+    second     = str(round((float(format(minute, '.4f')) - (int(mili_sec)//60000)) * 60, 2)).replace('.','\'')
+    lap_time   = str(int(mili_sec)//60000) + '\'' + second
+    return lap_time
+
 
 class CommentView(View):
     def get(self, request, user_id):
@@ -99,36 +105,6 @@ class RankDetailView(View):
         except GameUser.DoesNotExist:
             return HttpResponse(status=400)
 
-class IndiRankListView(View):
-
-    def get(self, request):
-        indi_match_id = "7b9f0fd5377c38514dbb78ebe63ac6c3b81009d5a31dd569d1cff8f005aa881a"
-        team_id = 1
-        rank_list = Ranking.objects.prefetch_related('game_user_set').filter(team_type_id=team_id).values()
-        rank_list = list(rank_list)
-
-        for i in range(len(rank_list)):
-            rank_list[i]['nickname'] = GameUser.objects.get(id=i+1).nickname
-            rank_list[i]['access_id'] = GameUser.objects.get(id=i+1).access_id
-            rank_list[i]['matchType'] = indi_match_id 
-        
-        return JsonResponse({"indi_rank_list" : rank_list}, status = 200)
-
-class TeamRankListView(View):
-
-    def get(self, request):
-        team_match_id = "effd66758144a29868663aa50e85d3d95c5bc0147d7fdb9802691c2087f3416e"
-        team_id = 2 
-        rank_list = Ranking.objects.prefetch_related('game_user_set').filter(team_type_id=team_id).values()
-        rank_list = list(rank_list)
-
-        for i in range(len(rank_list)):
-            rank_list[i]['nickname'] = GameUser.objects.get(id=i+1).nickname
-            rank_list[i]['access_id'] = GameUser.objects.get(id=i+1).access_id
-            rank_list[i]['matchType'] = team_match_id 
-
-        return JsonResponse({"team_rank_list" : rank_list}, status = 200)
-
 class IndiDetailTrackView(View):
     def get(self, request, access_id):
         access_id     = GameUser.objects.get(access_id = access_id)
@@ -142,7 +118,7 @@ class IndiDetailTrackView(View):
         track_info_result = [
                 {
                     'play_cnt': i.play_cnt,
-                    'win_ratio': i.win_ratio,
+                    'win_ratio': float(i.win_ratio),
                     'best_lap': i.best_lap,
                     'track_name': i.track.name,
                     'track_key': Track.objects.get(name=i.track).key
@@ -178,9 +154,13 @@ class IndiDetailTrackDist(View):
         track  = Track.objects.get(key = track_key)
         track_record = UserTrackRecord.objects.get(
                 game_user = access_id, team_type = match_type, track = track)
+        track_record2 = copy.deepcopy(track_record)
+        track_record3 = {str(milisec_converter(i)):j for i,j in eval(track_record2.cumul_dist)[1].items()}
+        track_record4 = [str(milisec_converter(eval(track_record2.cumul_dist)[0])), track_record3]
         track_record_result = [
                 {
                     'track_distribution': eval(track_record.cumul_dist),
+                    'track_distribution2' : track_record4,
                     'track_name': track_record.track.name,
                     'track_key': Track.objects.get(name=track_record.track.name).key
                     }
@@ -194,9 +174,13 @@ class TeamDetailTrackDist(View):
         track  = Track.objects.get(key = track_key)
         track_record = UserTrackRecord.objects.get(
                 game_user = access_id, team_type = match_type, track = track)
+        track_record2 = copy.deepcopy(track_record)
+        track_record3 = {str(milisec_converter(i)):j for i,j in eval(track_record2.cumul_dist)[1].items()}
+        track_record4 = [str(milisec_converter(eval(track_record2.cumul_dist)[0])), track_record3]
         track_record_result = [
                 {
                     'track_distribution': eval(track_record.cumul_dist),
+                    'track_distribution2' : track_record4,
                     'track_name': track_record.track.name,
                     'track_key': Track.objects.get(name=track_record.track.name).key
                     }
