@@ -77,8 +77,8 @@ class IndiMatchView(View):
         match_id_list = make_match_id_list(access_id, match_type)
         detail_list   = make_detail_list(access_id, match_type)
         match_list    = []
-        indi_list     = []
-        indi_final    = []
+#        indi_list     = []
+#        indi_final    = []
 
         # when access_id doesn't exist
         if not match_id_list:
@@ -105,7 +105,7 @@ class IndiMatchView(View):
                 mask = (players['matchRank'] == 99)
                 players.loc[mask, 'matchTime'] = 0
 
-                players['kart'] = 'https://wekart.s3.ap-northeast-2.amazonaws.com/kart' + players['kart'] + '.png'
+                players['kart'] = 'https://wekart.s3.ap-northeast-2.amazonaws.com/kart/' + players['kart'] + '.png'
                 players['matchTime'] = pd.to_timedelta(players['matchTime'], unit='ms').astype(str).str.slice(start=10, stop=18)
                 players['matchTime'] = players['matchTime'].str.replace(':','\'').str.replace('.','\'')
 
@@ -163,7 +163,7 @@ class TeamMatchView(View):
                     columns='level_1').rename(
                     columns={'level_0':'teamId'}
                 )
-                teams_key['kart'] = 'https://wekart.s3.ap-northeast-2.amazonaws.com/kart' + teams_key['kart'] + '.png'
+                teams_key['kart'] = 'https://wekart.s3.ap-northeast-2.amazonaws.com/kart/' + teams_key['kart'] + '.png'
 
                 team_list.append(teams_key.to_dict(orient='records'))
 
